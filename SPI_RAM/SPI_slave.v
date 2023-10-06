@@ -16,11 +16,12 @@ module spi_slave (
     parameter READ_ADD = 3'b011;
     parameter READ_DATA = 3'b100;
 
-    (*fsm_encoding="gray"*)
+    (*fsm_encoding="one_hot"*)
     reg [2:0] cs, ns;
     reg [9:0] rx_data,tx_data;
-    reg [3:0] bit_count;
+    reg [4:0] bit_count;
     reg [7:0] read_reg;
+    reg addr_data;
     wire flag;
 
 
@@ -28,12 +29,25 @@ module spi_slave (
         
         if(!rst_n)
         read_reg<=0;
+        
 
         else 
        read_reg<=dout;
     
     end
 
+    always@(posedge clk or negedge rst_n) begin
+
+        if(!rst_n)
+        addr_data<=0;
+
+        else if(cs==READ_ADD)
+        addr_data<=1;
+
+        else if(cs==READ_DATA)
+        addr_data<=0;
+    
+    end
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -48,19 +62,26 @@ module spi_slave (
         if(!rst_n)
         bit_count<=0;
 
-        else if ((cs==WRITE || cs==READ_ADD)&&(bit_count<10)) begin
-                
+        else if ( ((cs==WRITE) || (cs==READ_ADD) ) &&(bit_count<10) ) begin
+
                 rx_data[9-bit_count] <= MOSI;
                 bit_count <= bit_count + 1;
 
             end 
-        
-        else if (flag) begin
-                bit_count<=bit_count+1;   
-            end
+
+        else if(cs==READ_DATA) begin
+
+               if(bit_count<10) begin
+                  rx_data[9-bit_count] <= MOSI;
+                  end
+
+                
+                  bit_count<=bit_count+1;             
+        end
 
          else
-         bit_count<=0;    
+         bit_count<=0;
+            
     end
 
     always @(*) begin
@@ -80,11 +101,13 @@ module spi_slave (
                 else if (MOSI == 1'b0) begin
                     ns = WRITE;
                 end 
-                else begin
+                else if(MOSI ==1 && addr_data==0) begin
                     ns = READ_ADD;
                 end
 
-                
+               else
+               ns=READ_DATA; 
+
             end
 
             WRITE: begin
@@ -101,7 +124,7 @@ module spi_slave (
                     ns = IDLE;
                 end
 
-                else if((rx_data[8]==1)&&(bit_count==4'd10))
+                else if(rx_data[8]==1 && bit_count==2)
                 ns=READ_DATA;
 
                 else begin
@@ -112,7 +135,12 @@ module spi_slave (
             READ_DATA: begin
                 if (SS_n) begin
                     ns = IDLE;
-                end else begin
+                end 
+                
+                else if(rx_data[8]==0 && bit_count==2)
+                ns=READ_ADD;
+                
+                else begin
                     ns = READ_DATA;
                 end
             end
@@ -127,25 +155,34 @@ module spi_slave (
             WRITE,READ_ADD: begin
                 din = rx_data;
                 rx_valid = (bit_count==4'd10)?1:0;
-                MISO = 1'b0;
             end
 
             READ_DATA: begin
                 din = rx_data;
                 rx_valid = (bit_count==4'd10)?1:0;
-                MISO=(flag)?read_reg[7-bit_count]:0;
             end
 
             default:begin
                 din=0;
                 rx_valid = 1'b0;
-                MISO = 1'b0;
             end
 
         endcase
     end
 
-assign flag=((cs==READ_DATA)&&(tx_valid==1)&&(bit_count<8))?1:0;
+    always @(posedge clk or negedge rst_n) begin
+        
+          if(!rst_n)
+          MISO<=0;
+
+          else if(cs==READ_DATA)
+          MISO<=(tx_valid && bit_count>10 && bit_count<19)?read_reg[18-bit_count]:0;
+
+          else
+          MISO<=0;
+
+
+    end
 
 endmodule
 

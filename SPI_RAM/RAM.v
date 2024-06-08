@@ -18,7 +18,7 @@ module RAM(
     reg [ADDR_SIZE-1:0] wr_addr;
     reg [ADDR_SIZE-1:0] rd_addr;
 
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             wr_addr <= 0;
             rd_addr <= 0;

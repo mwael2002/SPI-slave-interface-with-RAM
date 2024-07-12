@@ -11,7 +11,7 @@ class spi_coverage extends  uvm_component;
 
     covergroup cvr_grp_spi;
 
-            c_din: coverpoint cov_seq_item.data_in{
+            c_din: coverpoint cov_seq_item.data_in iff(cov_seq_item.rst_n){
 
             bins address_write_max={11'b000_1111_1111};
             bins address_read_max = {11'b110_1111_1111};
@@ -22,18 +22,6 @@ class spi_coverage extends  uvm_component;
         
         }
 
-        c_rst_n:coverpoint cov_seq_item.rst_n;
-
-           cross_write: cross c_din,c_rst_n{
-
-           bins write_max_and_rx_valid = binsof(c_rst_n) intersect{1} && binsof(c_din.address_write_max);
-           bins read_max_and_rx_valid = binsof(c_rst_n) intersect{1} && binsof(c_din.address_read_max);
-           bins write_min_and_rx_valid = binsof(c_rst_n) intersect{1} && binsof(c_din.address_write_min);
-           bins read_min_and_rx_valid = binsof(c_rst_n) intersect{1} && binsof(c_din.address_read_min);
-
-           ignore_bins not_rst = binsof(c_rst_n) intersect{0};
-
-        }
         endgroup
 
 
@@ -57,14 +45,9 @@ class spi_coverage extends  uvm_component;
 
         task run_phase(uvm_phase phase);
 	        super.run_phase(phase);
+            `uvm_info("run_phase","coverage run phase has started",UVM_LOW);
 	        forever begin
 	        	cov_fifo.get(cov_seq_item);
-                
-                #16;
-                if(cov_seq_item.data_in[10]==1)
-                #16;
-
-                #2;
 
 	        	cvr_grp_spi.sample();
 	        end

@@ -22,36 +22,12 @@ task run_phase(uvm_phase phase);
 		driver_vif.rst_n=driver_seq_item.rst_n;
 		driver_golden_vif.rst_n=driver_seq_item.rst_n;
 
-		if(driver_seq_item.data_in[10]==0) begin
-
 		driver_vif.SS_n=0;
 		driver_golden_vif.SS_n=0;
-		@(negedge driver_vif.clk);
 		
+        @(negedge driver_vif.clk);
 
 		for(int i=10;i>=0;i--) begin
-
-        driver_vif.MOSI=driver_seq_item.data_in[i];
-        driver_golden_vif.MOSI=driver_seq_item.data_in[i];
-        @(negedge driver_vif.clk);
-
-        end
-		driver_vif.SS_n=1;
-		driver_golden_vif.SS_n=1;
-		@(negedge driver_vif.clk);
-
-		end
-
-
-		else begin
-
-		driver_vif.SS_n=0;
-		driver_golden_vif.SS_n=0;
-        
-		repeat(2)
-        @(negedge driver_vif.clk);
-
-        for(int i=10;i>=0;i--) begin
 
         driver_vif.MOSI=driver_seq_item.data_in[i];
         driver_golden_vif.MOSI=driver_seq_item.data_in[i];
@@ -66,13 +42,11 @@ task run_phase(uvm_phase phase);
 
         end
        end
-       
-        driver_vif.SS_n=1;
+    
+		driver_vif.SS_n=1;
         driver_golden_vif.SS_n=1;
 		@(negedge driver_vif.clk);
 
-		end
-    
 		seq_item_port.item_done();
 		`uvm_info("run_phase", driver_seq_item.convert2string_stimulus(),UVM_HIGH)
 

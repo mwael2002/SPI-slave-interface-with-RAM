@@ -12,7 +12,7 @@ class spi_sequence_write extends  uvm_sequence #(spi_seq_item);
     endfunction : new
 
 task body();
-	repeat(2500)begin
+	repeat(3000)begin
 		seq_item1=spi_seq_item::type_id::create("seq_item1");
 		seq_item1.c_data_read.constraint_mode(0);
 		start_item(seq_item1);
@@ -31,7 +31,7 @@ class spi_sequence_read extends  uvm_sequence #(spi_seq_item);
     endfunction : new
 
 task body();
-	repeat(2500)begin
+	repeat(3000)begin
 		seq_item=spi_seq_item::type_id::create("seq_item");
 		seq_item.c_data_write.constraint_mode(0);
 		start_item(seq_item);
